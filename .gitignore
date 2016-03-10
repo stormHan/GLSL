@@ -33,3 +33,9 @@
 *.suo
 *.vcxproj
 *.filters
+*.tlog
+*.log
+*.pdb
+*.idb
+*.lastbuildstate
+
