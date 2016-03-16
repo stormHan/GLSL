@@ -34,7 +34,7 @@ GLdouble projection[16], modelview[16];//Í¨¹ýglGetDoublev()º¯ÊýµÃµ½µÄ¾ØÕóÐÅÏ¢´æÔ
 GLMmodel* Rabbit = NULL;
 
 char* Rabbit_path = "../Models/rabbit.obj";
-char* Robot_path = "../Models/robot.obj";
+char* Robot_path = "../Models/robot_normalize.obj";
 
 vector<Utils_sampling::Vec3> samples_pos;
 vector<Utils_sampling::Vec3> samples_nol;
@@ -154,10 +154,10 @@ static void ModelInit()
 		exit(0);
 	}
 
-	glmUnitize(Rabbit);
-	glmScale(Rabbit, 0.5);
-	glmFacetNormals(Rabbit);
-	glmVertexNormals(Rabbit, 90.0);
+	//glmUnitize(Rabbit);
+	//glmScale(Rabbit, 0.5);
+	//glmFacetNormals(Rabbit);
+	//glmVertexNormals(Rabbit, 90.0);
 }
 
 static void DrawSamples()
@@ -165,9 +165,14 @@ static void DrawSamples()
 	for(int i = 0; i < samples_pos.size(); i++)
 	{
 		glPushMatrix();
-		glTranslatef(samples_pos[i].x / 10 , samples_pos[i].y / 10, samples_pos[i].z / 10);
-
-		glutSolidSphere(0.005f, 5, 5);
+		glColor3f(0.0f, 0.0f, 0.0f);
+		glPointSize(2.0f);
+		glBegin(GL_POINTS);
+			glVertex3f(samples_pos[i].x, samples_pos[i].y, samples_pos[i].z);
+		glEnd();
+		
+		//glTranslatef(samples_pos[i].x / 10, samples_pos[i].y / 10, samples_pos[i].z / 10);
+		//glutSolidSphere(0.01f, 10, 10);
 		glPopMatrix();
 	}
 	
@@ -185,19 +190,13 @@ static void UniformSampling(char* path)
 		exit(0);
 	}
 	
-	int temp_length = _normals.size();
-	for(int i = _vertices.size(); i > temp_length; --i)
-	{
-		Utils_sampling::Vec3 temp(0.0f, 0.0f, 0.0f);
-		_normals.push_back(temp);
-	}
-	Utils_sampling::poisson_disk(0.0, 1000, _vertices, _normals, _tris, samples_pos, samples_nol);
+	Utils_sampling::poisson_disk(0.0, 300, _vertices, _normals, _tris, samples_pos, samples_nol);
 }
 
 static void RenderSceneCB()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
