@@ -10,6 +10,7 @@
 #include "math_3d.h"
 #include "Pipeline.h"
 #include "camera.h"
+#include "texture.h"
 
 using namespace std;
 
@@ -34,11 +35,11 @@ using namespace std;
 
 PersProjInfo persprojection;
 Camera* pCamera = NULL;
-
+Texture* pTexture = NULL;
 Shader shader_light("Shader/light.vs", "Shader/light.fs");
 
 //-------Buffer setting----------------
-GLuint VBO, IBO;
+GLuint VBO, IBO, uvBuffer;
 GLfloat rotate_val = 0.0f;
 //-------Callback Func ----------------
 static void RenderSceneCB()
@@ -56,14 +57,25 @@ static void RenderSceneCB()
 	p.SetCamera(*pCamera);
 	p.SetPersjection(persprojection);
 
+	//set the world ,view, projection matrix into shader
 	glUniformMatrix4fv(shader_light.gWorldLocation, 1, GL_TRUE, p.GetWVPTrans());
 
+	//bind the texture
+	
+
 	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+	glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+	pTexture->Bind(GL_TEXTURE0);
+
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
 	
 	glFlush();
 	glutSwapBuffers();
@@ -162,10 +174,52 @@ static void CreateVertexBuffer()
 		-1.0f, 1.0f, 1.0f,
 		1.0f, -1.0f, 1.0f
 	};
+	static const GLfloat g_uv_buffer_data[] = {
+		0.000059f, 1.0f - 0.000004f,
+		0.000103f, 1.0f - 0.336048f,
+		0.335973f, 1.0f - 0.335903f,
+		1.000023f, 1.0f - 0.000013f,
+		0.667979f, 1.0f - 0.335851f,
+		0.999958f, 1.0f - 0.336064f,
+		0.667979f, 1.0f - 0.335851f,
+		0.336024f, 1.0f - 0.671877f,
+		0.667969f, 1.0f - 0.671889f,
+		1.000023f, 1.0f - 0.000013f,
+		0.668104f, 1.0f - 0.000013f,
+		0.667979f, 1.0f - 0.335851f,
+		0.000059f, 1.0f - 0.000004f,
+		0.335973f, 1.0f - 0.335903f,
+		0.336098f, 1.0f - 0.000071f,
+		0.667979f, 1.0f - 0.335851f,
+		0.335973f, 1.0f - 0.335903f,
+		0.336024f, 1.0f - 0.671877f,
+		1.000004f, 1.0f - 0.671847f,
+		0.999958f, 1.0f - 0.336064f,
+		0.667979f, 1.0f - 0.335851f,
+		0.668104f, 1.0f - 0.000013f,
+		0.335973f, 1.0f - 0.335903f,
+		0.667979f, 1.0f - 0.335851f,
+		0.335973f, 1.0f - 0.335903f,
+		0.668104f, 1.0f - 0.000013f,
+		0.336098f, 1.0f - 0.000071f,
+		0.000103f, 1.0f - 0.336048f,
+		0.000004f, 1.0f - 0.671870f,
+		0.336024f, 1.0f - 0.671877f,
+		0.000103f, 1.0f - 0.336048f,
+		0.336024f, 1.0f - 0.671877f,
+		0.335973f, 1.0f - 0.335903f,
+		0.667969f, 1.0f - 0.671889f,
+		1.000004f, 1.0f - 0.671847f,
+		0.667979f, 1.0f - 0.335851f
+	};
 
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &uvBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 }
 
 
@@ -203,6 +257,9 @@ int main(int argc, char** argv)
 	glFrontFace(GL_CW);
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
+
+	pTexture = new Texture(GL_TEXTURE_2D);
+	pTexture->loadBMP_custom("../Resource/uvtemplate.bmp");
 
 	pCamera = new Camera(WINDOW_WIDTH, WINDOW_HEIGHT);
 
