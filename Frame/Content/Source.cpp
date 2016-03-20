@@ -11,6 +11,8 @@
 #include "Pipeline.h"
 #include "camera.h"
 #include "texture.h"
+#include "ObjLoader.h"
+#include "LightControl.h"
 
 using namespace std;
 
@@ -19,25 +21,15 @@ using namespace std;
 
 #pragma comment(lib, "glew32.lib")
 
-/*struct Vertex
-{
-	Vector3f m_pos;
-	Vector2f m_tex;
-
-	Vertex() {}
-
-	Vertex(Vector3f pos, Vector2f tex)
-	{
-		m_pos = pos;
-		m_tex = tex;
-	}
-};*/
-
 PersProjInfo persprojection;
+ObjLoader* pLoader = NULL;
 Camera* pCamera = NULL;
 Texture* pTexture = NULL;
 Shader shader_light("Shader/light.vs", "Shader/light.fs");
-
+//-------Light--------------------------------
+Light* pLight = NULL;
+DirectionLight* pDirLight = NULL;
+LightControl* pLC = NULL;
 //-------Buffer setting----------------
 GLuint VBO, IBO, uvBuffer;
 GLfloat rotate_val = 0.0f;
@@ -58,24 +50,34 @@ static void RenderSceneCB()
 	p.SetPersjection(persprojection);
 
 	//set the world ,view, projection matrix into shader
-	glUniformMatrix4fv(shader_light.gWorldLocation, 1, GL_TRUE, p.GetWVPTrans());
+	
+	shader_light.SetWVP(p.GetWVPTrans());
+	shader_light.SetgWorld(p.GetWorldTrans());
 
+	shader_light.SetAmbientLight(*pLight);
+	shader_light.SetDirectiontLight(*pDirLight);
 	//bind the texture
 	
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glEnableVertexAttribArray(2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, pLoader->loader_vertexbuffer);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-	glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, pLoader->loader_uvbuffer);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, pLoader->loader_normalbuffer);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 	pTexture->Bind(GL_TEXTURE0);
 
-	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDrawArrays(GL_TRIANGLES, 0, pLoader->Mesh_num);
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
+	glDisableVertexAttribArray(2);
 	
 	glFlush();
 	glutSwapBuffers();
@@ -83,37 +85,23 @@ static void RenderSceneCB()
 
 static void SpecialKeyboardCB(int Key, int x, int y)
 {
-
+	
 }
 
 
 static void MouseCB(int button, int state, int x, int y)
 {
-	if (state == GLUT_DOWN){
-		switch (button)
-		{
-		case GLUT_RIGHT_BUTTON:	Mouse_Rightdown = GL_TRUE; break;
-		case GLUT_LEFT_BUTTON:  Mouse_Leftdown = GL_TRUE; break;
-		case GLUT_MIDDLE_BUTTON:Mouse_Middledown = GL_TRUE; break;
-
-		default:
-			break;
-		}
-	}
-	else
-	{
-		Mouse_Leftdown = GL_FALSE;
-		Mouse_Rightdown = GL_FALSE;
-		Mouse_Middledown = GL_FALSE;
-	}
-
-	MousePosition_x = x;
-	MousePosition_y = y;
+	pLC->clickMouse(button, state, x, y);
 }
 
 static void  MouseMotion(int x, int y)
 {
 	pCamera->OnMouse(x, y);
+}
+
+static void MouseMotionwithClick(int x, int y)
+{
+	pLC->onMouse(x, y);
 }
 
 static void NormalKeyboardCB(unsigned char Key, int x, int y)
@@ -129,8 +117,12 @@ static void InitializeGlutCallBacks()
 
 	glutSpecialFunc(SpecialKeyboardCB);
 	glutKeyboardFunc(NormalKeyboardCB);
-	//glutMotionFunc(MouseMotion); //鼠标移动。
 
+	//click the mouse to adjust the light
+	glutMotionFunc(MouseMotionwithClick); //鼠标移动。
+	glutMouseFunc(MouseCB);
+
+	//unclicked to control the camera
 	glutPassiveMotionFunc(MouseMotion);
 }
 
@@ -254,19 +246,38 @@ int main(int argc, char** argv)
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+
 	glFrontFace(GL_CW);
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
 
+	//read the texture
 	pTexture = new Texture(GL_TEXTURE_2D);
-	pTexture->loadBMP_custom("../Resource/uvtemplate.bmp");
+	pTexture->loadDDS("../Resource/uvmap2.DDS");
 
+	//road the Obj model
+	pLoader = new ObjLoader("../Resource/suzanne.obj");
+	pLoader->Load();
+
+	//set the camera parameter
 	pCamera = new Camera(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-	CreateVertexBuffer();
+	//initialize the light
+	pLight = new Light();
+	pDirLight = new DirectionLight();
+
+	//start the light control
+	pLC = new LightControl();
+	pLC->Bind(pLight);
+	pLC->Bind(pDirLight);
+
+	//CreateVertexBuffer();
 	//CreateIndexBuffer();
 
 	shader_light.CompileShaders();
+	shader_light.init();
 
 	persprojection.FOV = 60.0f;
 	persprojection.Height = WINDOW_HEIGHT;

@@ -129,4 +129,8 @@ void ObjLoader::Load2VBO()
 	glGenBuffers(1, &loader_uvbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, loader_uvbuffer);
 	glBufferData(GL_ARRAY_BUFFER, out_uvs.size() * sizeof(Vector2f), &out_uvs[0], GL_STATIC_DRAW);
+
+	glGenBuffers(1, &loader_normalbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, loader_normalbuffer);
+	glBufferData(GL_ARRAY_BUFFER, out_normals.size() * sizeof(Vector3f), &out_normals[0], GL_STATIC_DRAW);
 }
