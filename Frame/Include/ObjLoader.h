@@ -26,6 +26,7 @@ public:
 
 	GLuint loader_vertexbuffer;
 	GLuint loader_uvbuffer;
+	GLuint loader_normalbuffer;
 
 private:
 	const char* filepath;

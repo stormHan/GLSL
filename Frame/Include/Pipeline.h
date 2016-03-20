@@ -9,6 +9,7 @@
 #define H_PIPELINE_H
 #include <glut.h>
 #include "math_3d.h"
+#include "camera.h"
 
 struct Oritation
 {
@@ -86,6 +87,11 @@ public:
 		cameraInfo.Pos = Pos;
 		cameraInfo.Target = Target;
 		cameraInfo.Up = Up;
+	}
+
+	void SetCamera(const Camera& camera)
+	{
+		SetCamera(camera.GetPos(), camera.GetTarget(), camera.GetUp());
 	}
 
 	void SetPersjection(PersProjInfo& p)

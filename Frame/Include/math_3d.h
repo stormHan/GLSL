@@ -29,6 +29,57 @@ struct Vector2i
 	int y;
 };
 
+struct Vector3i
+{
+	int x;
+	int y;
+	int z;
+
+	Vector3i()
+	{
+
+	}
+
+	Vector3i(int _x, int _y, int _z)
+	{
+		x = _x;
+		y = _y;
+		z = _z;
+	}
+
+	Vector3i(int f)
+	{
+		x = y = z = f;
+	}
+
+	Vector3i& operator+=(const Vector3i& r)
+	{
+		x += r.x;
+		y += r.y;
+		z += r.z;
+
+		return *this;
+	}
+
+	Vector3i& operator-=(const Vector3i& r)
+	{
+		x -= r.x;
+		y -= r.y;
+		z -= r.z;
+
+		return *this;
+	}
+
+	Vector3i& operator*=(const Vector3i& r)
+	{
+		x *= r.x;
+		y *= r.y;
+		z *= r.z;
+
+		return *this;
+	}
+};
+
 struct Vector2f
 {
 	float x;
