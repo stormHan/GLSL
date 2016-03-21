@@ -29,10 +29,9 @@ public:
 	
 	void SetgWorld(const Matrix4f& gWorld);
 
-	void SetAmbientLight(Light& ambientLight);
-
 	void SetDirectiontLight(DirectionLight& directionLight);
 
+	void SetPointLight(PointLight& pointLight);
 private:
 
 	char* pVSFilename;
@@ -42,10 +41,17 @@ private:
 
 	GLuint m_WVPLocation;
 	GLuint m_gWorldloction;
-	GLuint m_ambientColorLocation;
-	GLuint m_AmbientLocation;
+	//DirectionLight
+	GLuint m_dirLightColorLocation;
+	GLuint m_dirLightAmbientLocation;
 	GLuint m_dirLightDirectionLocation;
 	GLuint m_dirLightDiffuseLocation;
+
+	//PointLight
+	GLuint m_poiLightColorLocation;
+	GLuint m_poiLightAmbientLocation;
+	GLuint m_poiLightPositionLocation;
+	GLuint m_poiLightDiffuseLocation;
 	
 };
 

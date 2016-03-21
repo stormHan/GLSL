@@ -16,12 +16,17 @@ public:
 
 	void Bind(DirectionLight* m_dLight);
 
+	void Bind(PointLight* m_pLight);
+
 	void onMouse(int x, int y);
 
 	void clickMouse(int button, int state, int x, int y);
 
+	void specialKeyMoved(int Key, int x, int y);
+
 	Light* m_light;
 	DirectionLight* m_Dirlight;
+	PointLight* m_Poilight;
 
 private:
 	GLboolean Mouse_Leftdown = GL_FALSE;

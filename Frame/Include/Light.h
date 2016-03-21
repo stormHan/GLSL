@@ -21,18 +21,22 @@ public:
 
 	void setLightColor(GLfloat x, GLfloat y, GLfloat z);
 
-
-
 	Vector3f getLightColor();
 
 	GLfloat getAmbientIntensity();
 
 	void setAmbientIntensity(GLfloat ambient);
+
+	GLfloat getDiffuseIntensity();
+
+	void setDiffuseIntensity(GLfloat diffuse);
 	
 private:
 	Vector3f m_lightColor;
 
 	GLfloat m_AmbientIntensity;
+
+	GLfloat m_DiffuseIntensity;
 };
 
 
@@ -47,14 +51,22 @@ public:
 
 	Vector3f getLightDirection();
 
-	GLfloat getDiffuseIntensity();
-
-	void setDiffuseIntensity(GLfloat diffuse);
 
 private:
 	Vector3f m_lightDirection;
-
-	GLfloat m_DiffuseIntensity;
 };
 
+class PointLight : public Light
+{
+public:
+	PointLight();
+
+	void setLightPosition(Vector3f position);
+
+	void setLightPosition(GLfloat x, GLfloat y, GLfloat z);
+
+	Vector3f getLightPosition();
+private:
+	Vector3f m_pointLightPos;
+};
 #endif //	H_HAN_LIGHT_H 
