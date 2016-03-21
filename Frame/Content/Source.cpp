@@ -27,8 +27,8 @@ Camera* pCamera = NULL;
 Texture* pTexture = NULL;
 Shader shader_light("Shader/light.vs", "Shader/light.fs");
 //-------Light--------------------------------
-Light* pLight = NULL;
 DirectionLight* pDirLight = NULL;
+PointLight* pPoiLight = NULL;
 LightControl* pLC = NULL;
 //-------Buffer setting----------------
 GLuint VBO, IBO, uvBuffer;
@@ -54,8 +54,8 @@ static void RenderSceneCB()
 	shader_light.SetWVP(p.GetWVPTrans());
 	shader_light.SetgWorld(p.GetWorldTrans());
 
-	shader_light.SetAmbientLight(*pLight);
 	shader_light.SetDirectiontLight(*pDirLight);
+	shader_light.SetPointLight(*pPoiLight);
 	//bind the texture
 	
 
@@ -85,7 +85,7 @@ static void RenderSceneCB()
 
 static void SpecialKeyboardCB(int Key, int x, int y)
 {
-	
+	pLC->specialKeyMoved(Key, x, y);
 }
 
 
@@ -265,14 +265,13 @@ int main(int argc, char** argv)
 	pCamera = new Camera(WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	//initialize the light
-	pLight = new Light();
 	pDirLight = new DirectionLight();
+	pPoiLight = new PointLight();
 
 	//start the light control
 	pLC = new LightControl();
-	pLC->Bind(pLight);
-	pLC->Bind(pDirLight);
-
+	/*pLC->Bind(pDirLight);*/
+	pLC->Bind(pPoiLight);
 	//CreateVertexBuffer();
 	//CreateIndexBuffer();
 

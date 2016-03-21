@@ -4,7 +4,9 @@ Light::Light()
 {
 	m_lightColor = (1.0f, 1.0f, 1.0f);	//initialized as white light
 	
-	m_AmbientIntensity = 0.5f;
+	m_AmbientIntensity = 0.15f;
+
+	m_DiffuseIntensity = 0.01f;
 }
 
 void Light::setLightColor(Vector3f color)
@@ -17,6 +19,16 @@ void Light::setLightColor(GLfloat x, GLfloat y, GLfloat z)
 	m_lightColor.x = x;
 	m_lightColor.y = y;
 	m_lightColor.z = z;
+}
+
+GLfloat Light::getDiffuseIntensity()
+{
+	return m_DiffuseIntensity;
+}
+
+void Light::setDiffuseIntensity(GLfloat diffuse)
+{
+	m_DiffuseIntensity = diffuse;
 }
 
 void Light::setAmbientIntensity(GLfloat ambient)
@@ -39,7 +51,6 @@ GLfloat Light::getAmbientIntensity()
 DirectionLight::DirectionLight()
 {
 	m_lightDirection = (3.0f, 2.0f, 5.0f);  //initialize the DirectionLight
-	m_DiffuseIntensity = 0.50f;
 }
 
 void DirectionLight::setLightDirection(Vector3f direction)
@@ -59,13 +70,26 @@ Vector3f DirectionLight::getLightDirection()
 	return m_lightDirection;
 }
 
-GLfloat DirectionLight::getDiffuseIntensity()
+//-------------------------Point Light-----------------------
+PointLight::PointLight()
 {
-	return m_DiffuseIntensity;
+	m_pointLightPos = {-3.0f, 3.0f, 1.0f};
 }
 
-void DirectionLight::setDiffuseIntensity(GLfloat diffuse)
+
+void PointLight::setLightPosition(Vector3f position)
 {
-	m_DiffuseIntensity = diffuse;
+	setLightPosition(position.x, position.y, position.z);
 }
 
+void PointLight::setLightPosition(GLfloat x, GLfloat y, GLfloat z)
+{
+	m_pointLightPos.x = x;
+	m_pointLightPos.y = y;
+	m_pointLightPos.z = z;
+}
+
+Vector3f PointLight::getLightPosition()
+{
+	return m_pointLightPos;
+}

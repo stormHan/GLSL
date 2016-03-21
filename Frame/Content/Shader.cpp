@@ -85,18 +85,30 @@ bool Shader::init()
 {
 	//gampler = glGetUniformLocation(ShaderProgram, "gSampler");
 	m_WVPLocation = glGetUniformLocation(ShaderProgram, "gWVP");
-	m_ambientColorLocation = glGetUniformLocation(ShaderProgram, "m_DirectionLight.directionLightColor");
-	m_AmbientLocation = glGetUniformLocation(ShaderProgram, "m_DirectionLight.AmbientIntensity");
 	m_gWorldloction = glGetUniformLocation(ShaderProgram, "gWorld");
+
+	m_dirLightColorLocation = glGetUniformLocation(ShaderProgram, "m_DirectionLight.directionLightColor");
+	m_dirLightAmbientLocation = glGetUniformLocation(ShaderProgram, "m_DirectionLight.AmbientIntensity");
 	m_dirLightDirectionLocation = glGetUniformLocation(ShaderProgram, "m_DirectionLight.Direction");
 	m_dirLightDiffuseLocation = glGetUniformLocation(ShaderProgram, "m_DirectionLight.DiffuseIntensity");
 
+	m_poiLightColorLocation = glGetUniformLocation(ShaderProgram, "m_PointLight.PointLightColor");
+	m_poiLightAmbientLocation = glGetUniformLocation(ShaderProgram, "m_PointLight.AmbientIntensity");
+	m_poiLightPositionLocation = glGetUniformLocation(ShaderProgram, "m_PointLight.pointLightPostion");
+	m_poiLightDiffuseLocation = glGetUniformLocation(ShaderProgram, "m_PointLight.DiffuseIntensity");
+
 	if (m_WVPLocation == 0xFFFFFFFF ||
-		m_ambientColorLocation == 0xFFFFFFFF ||
-		m_AmbientLocation == 0xFFFFFFFF ||
+		m_dirLightColorLocation == 0xFFFFFFFF ||
+
+		m_dirLightAmbientLocation == 0xFFFFFFFF ||
 		m_gWorldloction == 0xFFFFFFFF ||
 		m_dirLightDirectionLocation == 0xFFFFFFFF ||
-		m_dirLightDiffuseLocation == 0xFFFFFFFF)
+		m_dirLightDiffuseLocation == 0xFFFFFFFF ||
+
+		m_poiLightColorLocation == 0xFFFFFFFF ||
+		m_poiLightAmbientLocation == 0xFFFFFFFF ||
+		m_poiLightPositionLocation == 0xFFFFFFFF ||
+		m_poiLightDiffuseLocation == 0xFFFFFFFF)
 	{
 		return false;
 	}
@@ -114,16 +126,23 @@ void Shader::SetgWorld(const Matrix4f& gWorld)
 	glUniformMatrix4fv(m_gWorldloction, 1, GL_TRUE, (const GLfloat*)gWorld.m);
 }
 
-void Shader::SetAmbientLight(Light& ambientLight)
-{
-	glUniform3f(m_ambientColorLocation, ambientLight.getLightColor().x,
-		ambientLight.getLightColor().y, ambientLight.getLightColor().z);
-	glUniform1f(m_AmbientLocation, ambientLight.getAmbientIntensity());
-}
 
 void Shader::SetDirectiontLight(DirectionLight& directionLight)
 {
 	glUniform3f(m_dirLightDirectionLocation, directionLight.getLightDirection().x,
 		directionLight.getLightDirection().y, directionLight.getLightDirection().z);
+	glUniform3f(m_dirLightColorLocation, directionLight.getLightColor().x,
+		directionLight.getLightColor().y, directionLight.getLightColor().z);
+	glUniform1f(m_dirLightAmbientLocation, directionLight.getAmbientIntensity());
 	glUniform1f(m_dirLightDiffuseLocation, directionLight.getDiffuseIntensity());
+}
+
+void Shader::SetPointLight(PointLight& pointLight)
+{
+	glUniform3f(m_poiLightColorLocation, pointLight.getLightColor().x,
+		pointLight.getLightColor().y, pointLight.getLightColor().z);
+	glUniform3f(m_poiLightPositionLocation, pointLight.getLightPosition().x,
+		pointLight.getLightPosition().y, pointLight.getLightPosition().z);
+	glUniform1f(m_poiLightAmbientLocation, pointLight.getAmbientIntensity());
+	glUniform1f(m_poiLightDiffuseLocation, pointLight.getDiffuseIntensity());
 }
