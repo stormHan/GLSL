@@ -6,7 +6,6 @@ layout (location = 2) in vec3 vertex_Normal;
 
 //UV coordinate should be passed to fragment shader
 out vec2 UV;
-out vec3 Color_onNormal;
 out vec3 Normal0;
 out vec3 position0;
 
