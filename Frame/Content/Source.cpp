@@ -30,9 +30,28 @@ Shader shader_light("Shader/light.vs", "Shader/light.fs");
 DirectionLight* pDirLight = NULL;
 PointLight* pPoiLight = NULL;
 LightControl* pLC = NULL;
+PointLight pl[2];
+
+struct Vertex
+{
+	Vector3f m_pos;
+	Vector2f m_tex;
+	Vector3f m_normal;
+
+	Vertex() {}
+
+	Vertex(const Vector3f& pos, const Vector2f& tex, const Vector3f& normal)
+	{
+		m_pos = pos;
+		m_tex = tex;
+		m_normal = normal;
+	}
+};
 //-------Buffer setting----------------
-GLuint VBO, IBO, uvBuffer;
-GLfloat rotate_val = 0.0f;
+GLuint m_VBO, IBO, uvBuffer;
+
+static const float FieldDepth = 20.0f;
+static const float FieldWidth = 10.0f;
 //-------Callback Func ----------------
 static void RenderSceneCB()
 {
@@ -42,23 +61,36 @@ static void RenderSceneCB()
 
 	static float Scale = 0.0f;
 
-	Scale += 0.1f;
+	Scale += 0.0057f;
 	Pipeline p;
-	p.Rotate(0.0f, Scale, 0.0f);
-	p.Translate(0.0f, 0.0f, 3.0f);
+	//p.Rotate(0.0f, Scale, 0.0f);
+	//p.Translate(0.0f, 0.0f, 3.0f);
 	p.SetCamera(*pCamera);
 	p.SetPersjection(persprojection);
 
+	pl[0].setDiffuseIntensity(0.5f);
+	pl[0].setLightColor(1.0f, 0.5f, 0.0f);
+	pl[0].setLightPosition(3.0f, 1.0f, FieldDepth * (cosf(Scale) + 1.0f) / 2.0f);
+	pl[0].Attenuation.Linear = 0.1f;
+	pl[1].setDiffuseIntensity(0.5f);
+	pl[1].setLightColor(0.0f, 0.5f, 1.0f);
+	pl[1].setLightPosition(7.0f, 1.0f, FieldDepth * (sinf(Scale) + 1.0f) / 2.0f);
+	pl[1].Attenuation.Linear = 0.1f;
+	shader_light.SetPointLights(2, pl);
 	//set the world ,view, projection matrix into shader
 	
 	shader_light.SetWVP(p.GetWVPTrans());
 	shader_light.SetgWorld(p.GetWorldTrans());
+	shader_light.SetEye2World(pCamera->GetPos());;
 
-	shader_light.SetDirectiontLight(*pDirLight);
-	shader_light.SetPointLight(*pPoiLight);
+	shader_light.SetMatSpecularIntensity(0.0f);
+	shader_light.SetMatSpecularPower(0);
+
+	shader_light.SetDirectionalLight(*pDirLight);
 	//bind the texture
 	
-
+	//----------------------------------when read obj model using the pLoader-------------
+	/*
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
@@ -78,7 +110,32 @@ static void RenderSceneCB()
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
 	glDisableVertexAttribArray(2);
-	
+	*/
+	//-------------------------------------- Set the VBO yourself-------------------------
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)20);
+	pTexture->Bind(GL_TEXTURE0);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
+	glDisableVertexAttribArray(2);
+
+	//-----------------------------------Show the Point Lights--------------------------
+	glPushMatrix();
+	glColor3f(1.0f, 1.0f, 0.0f);
+	glPointSize(10.0f);
+	glBegin(GL_POINTS);
+		glVertex3f(pl[1].getLightPosition().x, pl[1].getLightPosition().y, pl[1].getLightPosition().z);
+		glVertex3f(pl[0].getLightPosition().x, pl[0].getLightPosition().y, pl[0].getLightPosition().z);
+	glEnd();
+	glPopMatrix();
+
 	glFlush();
 	glutSwapBuffers();
 }
@@ -128,90 +185,21 @@ static void InitializeGlutCallBacks()
 
 static void CreateVertexBuffer()
 {
-	static const GLfloat Vertices[] = {
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, 1.0f, -1.0f,
-		1.0f, -1.0f, 1.0f,
-		-1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f, 1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, -1.0f,
-		1.0f, -1.0f, 1.0f,
-		-1.0f, -1.0f, 1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f, -1.0f, 1.0f,
-		1.0f, -1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f, 1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, -1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, -1.0f,
-		-1.0f, 1.0f, -1.0f,
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, -1.0f,
-		-1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-		1.0f, -1.0f, 1.0f
-	};
-	static const GLfloat g_uv_buffer_data[] = {
-		0.000059f, 1.0f - 0.000004f,
-		0.000103f, 1.0f - 0.336048f,
-		0.335973f, 1.0f - 0.335903f,
-		1.000023f, 1.0f - 0.000013f,
-		0.667979f, 1.0f - 0.335851f,
-		0.999958f, 1.0f - 0.336064f,
-		0.667979f, 1.0f - 0.335851f,
-		0.336024f, 1.0f - 0.671877f,
-		0.667969f, 1.0f - 0.671889f,
-		1.000023f, 1.0f - 0.000013f,
-		0.668104f, 1.0f - 0.000013f,
-		0.667979f, 1.0f - 0.335851f,
-		0.000059f, 1.0f - 0.000004f,
-		0.335973f, 1.0f - 0.335903f,
-		0.336098f, 1.0f - 0.000071f,
-		0.667979f, 1.0f - 0.335851f,
-		0.335973f, 1.0f - 0.335903f,
-		0.336024f, 1.0f - 0.671877f,
-		1.000004f, 1.0f - 0.671847f,
-		0.999958f, 1.0f - 0.336064f,
-		0.667979f, 1.0f - 0.335851f,
-		0.668104f, 1.0f - 0.000013f,
-		0.335973f, 1.0f - 0.335903f,
-		0.667979f, 1.0f - 0.335851f,
-		0.335973f, 1.0f - 0.335903f,
-		0.668104f, 1.0f - 0.000013f,
-		0.336098f, 1.0f - 0.000071f,
-		0.000103f, 1.0f - 0.336048f,
-		0.000004f, 1.0f - 0.671870f,
-		0.336024f, 1.0f - 0.671877f,
-		0.000103f, 1.0f - 0.336048f,
-		0.336024f, 1.0f - 0.671877f,
-		0.335973f, 1.0f - 0.335903f,
-		0.667969f, 1.0f - 0.671889f,
-		1.000004f, 1.0f - 0.671847f,
-		0.667979f, 1.0f - 0.335851f
+	const Vector3f Normal = Vector3f(0.0, 1.0f, 0.0f);
+
+	Vertex Vertices[6] = {
+		Vertex(Vector3f(0.0f, 0.0f, 0.0f),			Vector2f(0.0f, 0.0f), Normal),
+		Vertex(Vector3f(0.0f, 0.0f, FieldDepth),	 Vector2f(0.0f, 1.0f), Normal),
+		Vertex(Vector3f(FieldWidth, 0.0f, 0.0f),	 Vector2f(1.0f, 0.0f), Normal),
+
+		Vertex(Vector3f(FieldWidth, 0.0f, 0.0f),			Vector2f(1.0f, 0.0f), Normal),
+		Vertex(Vector3f(0.0f, 0.0f, FieldDepth),			Vector2f(0.0f, 1.0f), Normal),
+		Vertex(Vector3f(FieldWidth, 0.0f, FieldDepth),		 Vector2f(1.0f, 1.0f), Normal)
 	};
 
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glGenBuffers(1, &m_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
-
-	glGenBuffers(1, &uvBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 }
 
 
@@ -255,14 +243,18 @@ int main(int argc, char** argv)
 
 	//read the texture
 	pTexture = new Texture(GL_TEXTURE_2D);
-	pTexture->loadDDS("../Resource/uvmap2.DDS");
+	pTexture->loadBMP_custom("../Resource/test.bmp");
 
 	//road the Obj model
-	pLoader = new ObjLoader("../Resource/suzanne.obj");
-	pLoader->Load();
+	//pLoader = new ObjLoader("../Resource/suzanne.obj");
+	//pLoader->Load();
 
 	//set the camera parameter
-	pCamera = new Camera(WINDOW_WIDTH, WINDOW_HEIGHT);
+	Vector3f Pos(5.0f, 1.0f, -3.0f);
+	Vector3f Target(0.0f, 0.0f, 1.0f);
+	Vector3f Up(0.0, 1.0f, 0.0f);
+
+	pCamera = new Camera(WINDOW_WIDTH, WINDOW_HEIGHT, Pos, Target, Up);
 
 	//initialize the light
 	pDirLight = new DirectionLight();
@@ -270,9 +262,10 @@ int main(int argc, char** argv)
 
 	//start the light control
 	pLC = new LightControl();
-	/*pLC->Bind(pDirLight);*/
-	pLC->Bind(pPoiLight);
-	//CreateVertexBuffer();
+	pLC->Bind(&pl[0]);
+	//pLC->Bind(pPoiLight);
+
+	CreateVertexBuffer();
 	//CreateIndexBuffer();
 
 	shader_light.CompileShaders();

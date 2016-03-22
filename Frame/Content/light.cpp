@@ -74,6 +74,10 @@ Vector3f DirectionLight::getLightDirection()
 PointLight::PointLight()
 {
 	m_pointLightPos = {-3.0f, 3.0f, 1.0f};
+
+	Attenuation.Constant = 1.0f;
+	Attenuation.Linear = 0.0f;
+	Attenuation.Exp = 0.0f;
 }
 
 
