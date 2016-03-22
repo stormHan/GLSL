@@ -29,9 +29,17 @@ public:
 	
 	void SetgWorld(const Matrix4f& gWorld);
 
-	void SetDirectiontLight(DirectionLight& directionLight);
+	void SetEye2World(const Vector3f& eye2worldv);
 
-	void SetPointLight(PointLight& pointLight);
+	void SetMatSpecularIntensity(GLfloat specularIntensity);
+
+	void SetMatSpecularPower(GLfloat specularPower);
+
+	void SetDirectionalLight(DirectionLight& Light);
+
+	void SetPointLights(unsigned int NumLights, PointLight* pLights);
+
+	static const unsigned int  MAX_POINT_LIGHTS = 2;
 private:
 
 	char* pVSFilename;
@@ -41,17 +49,35 @@ private:
 
 	GLuint m_WVPLocation;
 	GLuint m_gWorldloction;
-	//DirectionLight
-	GLuint m_dirLightColorLocation;
-	GLuint m_dirLightAmbientLocation;
-	GLuint m_dirLightDirectionLocation;
-	GLuint m_dirLightDiffuseLocation;
+	GLuint m_EyeWorldPos;
 
-	//PointLight
-	GLuint m_poiLightColorLocation;
-	GLuint m_poiLightAmbientLocation;
-	GLuint m_poiLightPositionLocation;
-	GLuint m_poiLightDiffuseLocation;
+	//metarial pamameters
+	GLuint m_SpecularIntensity;
+	GLuint m_SpecularPower;
+	
+	//DirectionLight
+	struct {
+		GLuint Color;
+		GLuint AmbientIntensity;
+		GLuint DiffuseIntensity;
+		GLuint Direction;
+	} m_dirLightLocation;
+
+
+	//Point Light
+	GLuint m_NumPointLights;
+	struct {
+		GLuint Color;
+		GLuint AmbientIntensity;
+		GLuint DiffuseIntensity;
+		GLuint Position;
+		struct
+		{
+			GLuint Constant;
+			GLuint Linear;
+			GLuint Exp;
+		} Atten;
+	} m_pointLightsLocation[MAX_POINT_LIGHTS];
 	
 };
 

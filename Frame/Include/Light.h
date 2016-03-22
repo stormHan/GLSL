@@ -66,6 +66,14 @@ public:
 	void setLightPosition(GLfloat x, GLfloat y, GLfloat z);
 
 	Vector3f getLightPosition();
+
+	struct
+	{
+		float Constant;
+		float Linear;
+		float Exp;
+	} Attenuation;
+
 private:
 	Vector3f m_pointLightPos;
 };
