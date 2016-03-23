@@ -1,10 +1,13 @@
 /*
 
-
+//---------------------------------------
+//
+//			stormhan  Han_Util.h
+//
+//		a class used to set light
+//--------------------------------------
 我自己写的一个图形学通用库，可用于辅助读取shader以及一些其它功能
 
-
-我自己写的一个图形学通用库，可用于辅助读取shader以及一些其它功能
 
 */
 
@@ -34,6 +37,7 @@ void FileReadingError(const char* pFileName, unsigned int line, const char* pErr
 
 #define FILE_READING_ERROR(FileError) FileReadingError(__FILE__, __LINE__, FileError); 
 
+#define GLCheckError() (glGetError() == GL_NO_ERROR)
 
 
 #endif
