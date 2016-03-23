@@ -6,13 +6,15 @@
 #include "Light.h"
 #include "HAN_UTIL.h"
 #include "ViewControl.h"
-#include "ShaderLoading.h"
+#include "ShadowMapShader.h"
+#include "LightShader.h"
 #include "math_3d.h"
 #include "Pipeline.h"
 #include "camera.h"
 #include "texture.h"
 #include "ObjLoader.h"
 #include "LightControl.h"
+#include "ShadowMapFBO.h"
 
 using namespace std;
 
@@ -25,12 +27,18 @@ PersProjInfo persprojection;
 ObjLoader* pLoader = NULL;
 Camera* pCamera = NULL;
 Texture* pTexture = NULL;
-Shader shader_light("Shader/light.vs", "Shader/light.fs");
+
+LightShader* pLightShader = NULL;
+ShadowMapShader* pShadowShader = NULL;
+
 //-------Light--------------------------------
 DirectionLight* pDirLight = NULL;
 PointLight* pPoiLight = NULL;
 LightControl* pLC = NULL;
 PointLight pl[2];
+
+//-------Shadow-------------------------------
+ShadowMapFBO m_shadowMapFBO;
 
 struct Vertex
 {
@@ -53,6 +61,24 @@ GLuint m_VBO, IBO, uvBuffer;
 static const float FieldDepth = 20.0f;
 static const float FieldWidth = 10.0f;
 //-------Callback Func ----------------
+
+void ShadowMapPass()
+{
+	m_shadowMapFBO.BindForWriting();
+
+	glClear(GL_DEPTH_BUFFER);
+
+	pShadowShader->Enable();
+
+
+}
+
+void RenderPass()
+{
+
+}
+
+
 static void RenderSceneCB()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -61,10 +87,13 @@ static void RenderSceneCB()
 
 	static float Scale = 0.0f;
 
-	Scale += 0.0057f;
+	Scale += 0.01f;
+
+	ShadowMapPass();
+	RenderPass();
 	Pipeline p;
 	//p.Rotate(0.0f, Scale, 0.0f);
-	//p.Translate(0.0f, 0.0f, 3.0f);
+	//p.Translate(10.0f, 0.0f, 5.0f);
 	p.SetCamera(*pCamera);
 	p.SetPersjection(persprojection);
 
@@ -73,24 +102,24 @@ static void RenderSceneCB()
 	pl[0].setLightPosition(3.0f, 1.0f, FieldDepth * (cosf(Scale) + 1.0f) / 2.0f);
 	pl[0].Attenuation.Linear = 0.1f;
 	pl[1].setDiffuseIntensity(0.5f);
-	pl[1].setLightColor(0.0f, 0.5f, 1.0f);
-	pl[1].setLightPosition(7.0f, 1.0f, FieldDepth * (sinf(Scale) + 1.0f) / 2.0f);
-	pl[1].Attenuation.Linear = 0.1f;
-	shader_light.SetPointLights(2, pl);
-	//set the world ,view, projection matrix into shader
-	
-	shader_light.SetWVP(p.GetWVPTrans());
-	shader_light.SetgWorld(p.GetWorldTrans());
-	shader_light.SetEye2World(pCamera->GetPos());;
+	pl[1].setLightColor(1.0f, 1.0f, 1.0f);
+	pl[1].setLightPosition(2.0f * cos(Scale), 5.0f, 2.0f * sin(Scale));
+	pl[1].Attenuation.Linear = 0.2f;
+	//shader_light.SetPointLights(2, pl);
+	////set the world ,view, projection matrix into shader
+	//
+	//shader_light.SetWVP(p.GetWVPTrans());
+	//shader_light.SetgWorld(p.GetWorldTrans());
+	//shader_light.SetEye2World(pCamera->GetPos());;
 
-	shader_light.SetMatSpecularIntensity(0.0f);
-	shader_light.SetMatSpecularPower(0);
+	//shader_light.SetMatSpecularIntensity(0.25f);
+	//shader_light.SetMatSpecularPower(1);
 
-	shader_light.SetDirectionalLight(*pDirLight);
+	//shader_light.SetDirectionalLight(*pDirLight);
 	//bind the texture
 	
 	//----------------------------------when read obj model using the pLoader-------------
-	/*
+	
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
@@ -110,8 +139,9 @@ static void RenderSceneCB()
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
 	glDisableVertexAttribArray(2);
-	*/
+	
 	//-------------------------------------- Set the VBO yourself-------------------------
+	/*
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
@@ -125,7 +155,7 @@ static void RenderSceneCB()
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
 	glDisableVertexAttribArray(2);
-
+	*/
 	//-----------------------------------Show the Point Lights--------------------------
 	glPushMatrix();
 	glColor3f(1.0f, 1.0f, 0.0f);
@@ -243,11 +273,11 @@ int main(int argc, char** argv)
 
 	//read the texture
 	pTexture = new Texture(GL_TEXTURE_2D);
-	pTexture->loadBMP_custom("../Resource/test.bmp");
+	pTexture->loadDDS("../Resource/uvmap.DDS");
 
 	//road the Obj model
-	//pLoader = new ObjLoader("../Resource/suzanne.obj");
-	//pLoader->Load();
+	pLoader = new ObjLoader("../Resource/room_thickwalls.obj");
+	pLoader->Load();
 
 	//set the camera parameter
 	Vector3f Pos(5.0f, 1.0f, -3.0f);
@@ -265,11 +295,26 @@ int main(int argc, char** argv)
 	pLC->Bind(&pl[0]);
 	//pLC->Bind(pPoiLight);
 
-	CreateVertexBuffer();
+	//CreateVertexBuffer();
 	//CreateIndexBuffer();
 
-	shader_light.CompileShaders();
-	shader_light.init();
+	if (!m_shadowMapFBO.Init(WINDOW_WIDTH, WINDOW_HEIGHT)) {
+		printf("fail to Initialize the ShadowMap Frame buffer!");
+		exit(0);
+	}
+
+	pShadowShader->Init();
+	pLightShader = new LightShader();
+	if (!pLightShader->Init())
+	{
+		printf("Error initializing the lighting technique\n");
+		exit(0);
+	}
+	pLightShader->Enable();
+	pLightShader->SetPointLights(1, &pl[0]);
+	pLightShader->SetTextureUnit(0);
+	pLightShader->SetShadowMapTextureUnit(1);
+	//shader_light.init();
 
 	persprojection.FOV = 60.0f;
 	persprojection.Height = WINDOW_HEIGHT;
