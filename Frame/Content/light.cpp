@@ -97,3 +97,26 @@ Vector3f PointLight::getLightPosition()
 {
 	return m_pointLightPos;
 }
+
+//-------------------Spot Light-------------------------------
+SpotLight::SpotLight()
+{
+	m_SpotLightDirection = Vector3f(0.0f, 0.0f, 0.0f);
+	Cutoff = 0.0f;
+}
+
+void SpotLight::SetSpotLightDir(Vector3f Light)
+{
+	SetSpotLightDir(Light.x, Light.y, Light.z);
+}
+void SpotLight::SetSpotLightDir(GLfloat x, GLfloat U, GLfloat z)
+{
+	m_SpotLightDirection.x = x;
+	m_SpotLightDirection.y = y;
+	m_SpotLightDirection.z = z;
+}
+
+Vector3f SpotLight::GetSpotLightDir()
+{
+	return m_SpotLightDirection;
+}

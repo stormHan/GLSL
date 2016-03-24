@@ -35,7 +35,7 @@ ShadowMapShader* pShadowShader = NULL;
 DirectionLight* pDirLight = NULL;
 PointLight* pPoiLight = NULL;
 LightControl* pLC = NULL;
-PointLight pl[2];
+SpotLight m_SpotLight;
 
 //-------Shadow-------------------------------
 ShadowMapFBO m_shadowMapFBO;
@@ -70,11 +70,51 @@ void ShadowMapPass()
 
 	pShadowShader->Enable();
 
+	Pipeline p;
+	p.SetCamera(m_SpotLight.getLightPosition(), m_SpotLight.GetSpotLightDir(), Vector3f(0.0f, 1.0f, 0.0f));
+	p.SetPersjection(persprojection);
+	pShadowShader->SetWVP(p.GetWVPTrans());
 
+	//render first
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, pLoader->loader_vertexbuffer);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+	glBindBuffer(GL_ARRAY_BUFFER, pLoader->loader_uvbuffer);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, pLoader->loader_normalbuffer);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	pTexture->Bind(GL_TEXTURE0);
+
+	glDrawArrays(GL_TRIANGLES, 0, pLoader->Mesh_num);
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
+	glDisableVertexAttribArray(2);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void RenderPass()
 {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//启用 light shader
+	pLightShader->Enable();
+	
+	//pass the uniform variebles
+	pLightShader->SetEye2World(pCamera->GetPos());
+
+	m_shadowMapFBO.BindForReading(GL_TEXTURE1);
+
+	Pipeline p;
+	p.SetPersjection(persprojection);
+
+	p.SetCamera(pCamera->GetPos(), pCamera->GetTarget(), pCamera->GetUp());
+	pLightShader->SetWVP(p.GetWVPTrans());
 
 }
 
@@ -303,23 +343,30 @@ int main(int argc, char** argv)
 		exit(0);
 	}
 
-	pShadowShader->Init();
 	pLightShader = new LightShader();
 	if (!pLightShader->Init())
 	{
 		printf("Error initializing the lighting technique\n");
 		exit(0);
 	}
+	//shader之间转换时，会保留之前的设定值，固一些不变的值可以在初始化时先设定好
 	pLightShader->Enable();
 	pLightShader->SetPointLights(1, &pl[0]);
 	pLightShader->SetTextureUnit(0);
 	pLightShader->SetShadowMapTextureUnit(1);
-	//shader_light.init();
+
+	pShadowShader = new ShadowMapShader();
+	if (pShadowShader->Init())
+	{
+		printf("Error initializing the shadowmap technique\n");
+		exit(0);
+	}
+
 
 	persprojection.FOV = 60.0f;
 	persprojection.Height = WINDOW_HEIGHT;
 	persprojection.Width = WINDOW_WIDTH;
-	persprojection.zFar = 100.0f;
+	persprojection.zFar = 50.0f;
 	persprojection.zNear = 1.0f;
 
 	glutMainLoop();

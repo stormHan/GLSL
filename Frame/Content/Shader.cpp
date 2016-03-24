@@ -3,7 +3,7 @@
 
 Shader::Shader()
 {
-	ShaderProgram = 0;
+	m_shaderProg = 0;
 }
 
 Shader::~Shader()
